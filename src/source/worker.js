@@ -9,7 +9,7 @@ import GeoJSONWorkerSource from './geojson_worker_source';
 import assert from 'assert';
 import {plugin as globalRTLTextPlugin} from './rtl_text_plugin';
 import {enforceCacheSizeLimit} from '../util/tile_request_cache';
-
+import { getCrs } from '../geo/mercator_coordinate'
 import type {
     WorkerSource,
     WorkerTileParameters,
@@ -43,7 +43,7 @@ export default class Worker {
 
         this.layerIndexes = {};
         this.availableImages = {};
-
+        
         this.workerSourceTypes = {
             vector: VectorTileWorkerSource,
             geojson: GeoJSONWorkerSource
@@ -151,6 +151,7 @@ export default class Worker {
      *  @private
      */
     loadWorkerSource(map: string, params: { url: string }, callback: Callback<void>) {
+        
         try {
             this.self.importScripts(params.url);
             callback();
@@ -210,6 +211,7 @@ export default class Worker {
                     this.actor.send(type, data, callback, mapId);
                 }
             };
+            
             this.workerSources[mapId][type][source] = new (this.workerSourceTypes[type]: any)((actor: any), this.getLayerIndex(mapId), this.getAvailableImages(mapId));
         }
 

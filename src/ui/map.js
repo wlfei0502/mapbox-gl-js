@@ -58,6 +58,8 @@ import type {
     SourceSpecification
 } from '../style-spec/types';
 
+import { setCrs } from '../geo/mercator_coordinate';
+
 type ControlPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 /* eslint-disable no-use-before-define */
 type IControl = {
@@ -361,7 +363,7 @@ class Map extends Camera {
     constructor(options: MapOptions) {
         PerformanceUtils.mark(PerformanceMarkers.create);
 
-        options = extend({}, defaultOptions, options);
+        this.options = options = extend({}, defaultOptions, options);
 
         if (options.minZoom != null && options.maxZoom != null && options.minZoom > options.maxZoom) {
             throw new Error(`maxZoom must be greater than or equal to minZoom`);
@@ -379,6 +381,7 @@ class Map extends Camera {
             throw new Error(`maxPitch must be less than or equal to ${defaultMaxPitch}`);
         }
 
+        setCrs(options.crs || 'EPSG:3857');
         const transform = new Transform(options.minZoom, options.maxZoom, options.minPitch, options.maxPitch, options.renderWorldCopies);
         super(transform, options);
 
@@ -2596,6 +2599,32 @@ class Map extends Camera {
                 this._render(paintStartTimeStamp);
             });
         }
+    }
+
+    switchProjection (crs, callback) {
+        setCrs(crs);
+
+        if (mapboxgl.workers) {
+            mapboxgl.workers.forEach((worker) => {
+                worker.postMessage({
+                    crs
+                });
+            });
+        }
+
+        this.resize()._update(true);
+
+        const sources = this.getStyle().sources;
+
+        Object.keys(sources).forEach(sourceId => {
+            const type = sources[sourceId].type;
+
+            if (type === 'geojson') {
+                this.getSource(sourceId).setData(sources[sourceId].data);
+            }
+        })
+
+        callback();
     }
 
     _onWindowOnline() {

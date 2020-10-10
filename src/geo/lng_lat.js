@@ -1,6 +1,6 @@
 // @flow
 
-import {wrap} from '../util/util';
+import {wrap, clamp} from '../util/util';
 import LngLatBounds from './lng_lat_bounds';
 
 /*
@@ -39,9 +39,12 @@ class LngLat {
         if (isNaN(lng) || isNaN(lat)) {
             throw new Error(`Invalid LngLat object: (${lng}, ${lat})`);
         }
+
+        lat = clamp(+lat, -90, 90);
+
         this.lng = +lng;
         this.lat = +lat;
-        if (this.lat > 90 || this.lat < -90) {
+        if (this.lat > 91 || this.lat < -91) {
             throw new Error('Invalid LngLat latitude value: must be between -90 and 90');
         }
     }

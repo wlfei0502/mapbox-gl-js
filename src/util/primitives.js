@@ -2,6 +2,7 @@
 
 import {vec3, vec4} from 'gl-matrix';
 import assert from 'assert';
+import { getCrs } from '../geo/mercator_coordinate';
 
 class Frustum {
     points: Array<Array<number>>;
@@ -29,7 +30,12 @@ class Frustum {
         // Transform frustum corner points from clip space to tile space
         const frustumCoords = clipSpaceCorners
             .map(v => vec4.transformMat4([], v, invProj))
-            .map(v => vec4.scale([], v, 1.0 / v[3] / worldSize * scale));
+            .map(v => { 
+                if(getCrs() === 'EPSG:4326'){
+                    v[1] = v[1] / 2;
+                }
+                return vec4.scale([], v, 1.0 / v[3] / worldSize * scale);
+            });
 
         const frustumPlanePointIndices = [
             [0, 1, 2],  // near

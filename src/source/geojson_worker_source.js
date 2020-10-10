@@ -25,6 +25,14 @@ import type {RequestParameters, ResponseCallback} from '../util/ajax';
 import type {Callback} from '../types/callback';
 import type {GeoJSONFeature} from '@mapbox/geojson-types';
 
+let crs = 'EPSG:3857';
+
+onmessage = function name(evt) {
+    if (evt.data.crs) {
+        crs = evt.data.crs;
+    }
+}
+
 export type LoadGeoJSONParameters = {
     request?: RequestParameters,
     data?: string,
@@ -183,7 +191,7 @@ class GeoJSONWorkerSource extends VectorTileWorkerSource {
                         const features = data.features.filter(feature => compiled.value.evaluate({zoom: 0}, feature));
                         data = {type: 'FeatureCollection', features};
                     }
-
+                    params.geojsonVtOptions.crs = crs;
                     this._geoJSONIndex = params.cluster ?
                         new Supercluster(getSuperclusterOptions(params)).load(data.features) :
                         geojsonvt(data, params.geojsonVtOptions);

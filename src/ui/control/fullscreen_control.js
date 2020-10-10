@@ -65,11 +65,26 @@ class FullscreenControl {
             this._controlContainer.style.display = 'none';
             warnOnce('This device does not support fullscreen mode.');
         }
+
+        this._map._controlLays = this._map._controlLays || []
+        this._map._controlLays.push(this);
+
         return this._controlContainer;
     }
 
     onRemove() {
         DOM.remove(this._controlContainer);
+        
+        if (this._map._controlLays) {
+            const index = this._map._controlLays.findIndex(control => {
+                return control === this;
+            });
+    
+            if (~index !== 0) {
+                this._map._controlLays.splice(index, 1);
+            }
+        }
+
         this._map = (null: any);
         window.document.removeEventListener(this._fullscreenchange, this._changeIcon);
     }

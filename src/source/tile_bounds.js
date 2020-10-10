@@ -1,7 +1,7 @@
 // @flow
 
 import LngLatBounds from '../geo/lng_lat_bounds';
-import {mercatorXfromLng, mercatorYfromLat} from '../geo/mercator_coordinate';
+import MercatorCoordinate,{mercatorXfromLng, mercatorYfromLat, getCrs } from '../geo/mercator_coordinate';
 
 import type {CanonicalTileID} from './tile_id';
 
@@ -24,11 +24,17 @@ class TileBounds {
 
     contains(tileID: CanonicalTileID) {
         const worldSize = Math.pow(2, tileID.z);
+
+        let worldSizeY = worldSize;
+        if (getCrs() === 'EPSG:4326') {
+            worldSizeY = worldSizeY/2;
+        }
+
         const level = {
             minX: Math.floor(mercatorXfromLng(this.bounds.getWest()) * worldSize),
-            minY: Math.floor(mercatorYfromLat(this.bounds.getNorth()) * worldSize),
+            minY: Math.floor(mercatorYfromLat(this.bounds.getNorth()) * worldSizeY),
             maxX: Math.ceil(mercatorXfromLng(this.bounds.getEast()) * worldSize),
-            maxY: Math.ceil(mercatorYfromLat(this.bounds.getSouth()) * worldSize)
+            maxY: Math.ceil(mercatorYfromLat(this.bounds.getSouth()) * worldSizeY)
         };
         const hit = tileID.x >= level.minX && tileID.x < level.maxX && tileID.y >= level.minY && tileID.y < level.maxY;
         return hit;

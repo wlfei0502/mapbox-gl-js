@@ -26,6 +26,10 @@ class LogoControl {
 
     onAdd(map: Map) {
         this._map = map;
+        
+        this._map._controlLays = this._map._controlLays || []
+        this._map._controlLays.push(this);
+
         this._container = DOM.create('div', 'mapboxgl-ctrl');
         const anchor = DOM.create('a', 'mapboxgl-ctrl-logo');
         anchor.target = "_blank";
@@ -47,6 +51,17 @@ class LogoControl {
 
     onRemove() {
         DOM.remove(this._container);
+        
+        if (this._map._controlLays) {
+            const index = this._map._controlLays.findIndex(control => {
+                return control === this;
+            });
+    
+            if (~index !== 0) {
+                this._map._controlLays.splice(index, 1);
+            }
+        }
+
         this._map.off('sourcedata', this._updateLogo);
         this._map.off('resize', this._updateCompact);
     }

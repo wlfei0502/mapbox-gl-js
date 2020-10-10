@@ -118,7 +118,7 @@ class GeoJSONSource extends Evented implements Source {
         this.promoteId = options.promoteId;
 
         const scale = EXTENT / this.tileSize;
-
+        
         // sent to the worker, along with `url: ...` or `data: literal geojson`,
         // so that it can load/parse/index the geojson data
         // extending with `options.workerOptions` helps to make it easy for

@@ -3,6 +3,12 @@
 import LngLat, {earthRadius} from '../geo/lng_lat';
 import type {LngLatLike} from '../geo/lng_lat';
 
+import { lonLatYfromLat, lonLatLatFromY, lonLatScale } from './lonlat_coordinate';
+
+const crs = {
+    name:'EPSG:3857'
+};
+
 /*
  * The average circumference of the world in meters.
  */
@@ -15,11 +21,23 @@ function circumferenceAtLatitude(latitude: number) {
     return earthCircumfrence * Math.cos(latitude * Math.PI / 180);
 }
 
+export function getCrs(){
+    return crs.name;
+}
+
+export function setCrs(newCrs){
+    crs.name = newCrs;
+}
+
 export function mercatorXfromLng(lng: number) {
     return (180 + lng) / 360;
 }
 
 export function mercatorYfromLat(lat: number) {
+    if (crs.name === 'EPSG:4326') {
+        return lonLatYfromLat(lat);
+    }
+
     return (180 - (180 / Math.PI * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)))) / 360;
 }
 
@@ -32,6 +50,10 @@ export function lngFromMercatorX(x: number) {
 }
 
 export function latFromMercatorY(y: number) {
+    if (crs.name === 'EPSG:4326') {
+        return lonLatLatFromY(y);
+    }
+
     const y2 = 180 - y * 360;
     return 360 / Math.PI * Math.atan(Math.exp(y2 * Math.PI / 180)) - 90;
 }
@@ -51,6 +73,11 @@ export function altitudeFromMercatorZ(z: number, y: number) {
  * @private
  */
 export function mercatorScale(lat: number) {
+
+    if (crs.name === 'EPSG:4326') {
+        return lonLatScale(lat);
+    }
+
     return 1 / Math.cos(lat * Math.PI / 180);
 }
 
@@ -99,7 +126,6 @@ class MercatorCoordinate {
      */
     static fromLngLat(lngLatLike: LngLatLike, altitude: number = 0) {
         const lngLat = LngLat.convert(lngLatLike);
-
         return new MercatorCoordinate(
                 mercatorXfromLng(lngLat.lng),
                 mercatorYfromLat(lngLat.lat),
@@ -112,7 +138,7 @@ class MercatorCoordinate {
      * @returns {LngLat} The `LngLat` object.
      * @example
      * var coord = new mapboxgl.MercatorCoordinate(0.5, 0.5, 0);
-     * var lngLat = coord.toLngLat(); // LngLat(0, 0)
+     * var latLng = coord.toLngLat(); // LngLat(0, 0)
      */
     toLngLat() {
         return new LngLat(

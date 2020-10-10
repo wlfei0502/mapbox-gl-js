@@ -71,6 +71,9 @@ class AttributionControl {
             this._updateCompact();
         }
 
+        this._map._controlLays = this._map._controlLays || []
+        this._map._controlLays.push(this);
+
         return this._container;
     }
 
@@ -81,6 +84,16 @@ class AttributionControl {
         this._map.off('sourcedata', this._updateData);
         this._map.off('moveend', this._updateEditLink);
         this._map.off('resize', this._updateCompact);
+
+        if (this._map._controlLays) {
+            const index = this._map._controlLays.findIndex(control => {
+                return control === this;
+            });
+    
+            if (~index !== 0) {
+                this._map._controlLays.splice(index, 1);
+            }
+        }
 
         this._map = (undefined: any);
         this._attribHTML = (undefined: any);

@@ -247,6 +247,9 @@ export default class Marker extends Evented {
         // `Popup#_onClickClose` listener.
         this._map.on('click', this._onMapClick);
 
+        this._map._markers = this._map._markers || []
+        this._map._markers.push(this);
+
         return this;
     }
 
@@ -268,6 +271,15 @@ export default class Marker extends Evented {
             this._map.off('touchend', this._onUp);
             this._map.off('mousemove', this._onMove);
             this._map.off('touchmove', this._onMove);
+            
+            const index = this._map._markers.findIndex(marker => {
+                return marker === this;
+            });
+
+            if (~index !== 0) {
+                this._map._markers.splice(index, 1);
+            }
+
             delete this._map;
         }
         DOM.remove(this._element);
@@ -437,7 +449,7 @@ export default class Marker extends Evented {
         if (this._map.transform.renderWorldCopies) {
             this._lngLat = smartWrap(this._lngLat, this._pos, this._map.transform);
         }
-
+        
         this._pos = this._map.project(this._lngLat)._add(this._offset);
 
         let rotation = "";

@@ -91,6 +91,10 @@ class NavigationControl {
 
     onAdd(map: Map) {
         this._map = map;
+        
+        this._map._controlLays = this._map._controlLays || []
+        this._map._controlLays.push(this);
+
         if (this.options.showZoom) {
             this._setButtonTitle(this._zoomInButton, 'ZoomIn');
             this._setButtonTitle(this._zoomOutButton, 'ZoomOut');
@@ -111,6 +115,7 @@ class NavigationControl {
 
     onRemove() {
         DOM.remove(this._container);
+        
         if (this.options.showZoom) {
             this._map.off('zoom', this._updateZoomButtons);
         }
@@ -121,6 +126,16 @@ class NavigationControl {
             this._map.off('rotate', this._rotateCompassArrow);
             this._handler.off();
             delete this._handler;
+        }
+
+        if (this._map._controlLays) {
+            const index = this._map._controlLays.findIndex(control => {
+                return control === this;
+            });
+    
+            if (~index !== 0) {
+                this._map._controlLays.splice(index, 1);
+            }
         }
 
         delete this._map;

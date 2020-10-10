@@ -127,6 +127,8 @@ class GeolocateControl extends Evented {
 
     onAdd(map: Map) {
         this._map = map;
+        this._map._controlLays = this._map._controlLays || []
+        this._map._controlLays.push(this);
         this._container = DOM.create('div', `mapboxgl-ctrl mapboxgl-ctrl-group`);
         checkGeolocationSupport(this._setupUI);
         return this._container;
@@ -149,6 +151,17 @@ class GeolocateControl extends Evented {
 
         DOM.remove(this._container);
         this._map.off('zoom', this._onZoom);
+
+        if (this._map._controlLays) {
+            const index = this._map._controlLays.findIndex(control => {
+                return control === this;
+            });
+    
+            if (~index !== 0) {
+                this._map._controlLays.splice(index, 1);
+            }
+        }
+
         this._map = (undefined: any);
         numberOfWatches = 0;
         noTimeout = false;

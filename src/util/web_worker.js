@@ -81,7 +81,7 @@ export default function WebWorker(): WorkerInterface {
 
     parentBus.target = workerBus;
     workerBus.target = parentBus;
-
+    
     new WebWorker.Worker(workerBus);
 
     return parentBus;

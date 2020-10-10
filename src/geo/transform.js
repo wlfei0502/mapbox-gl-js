@@ -2,7 +2,7 @@
 
 import LngLat from './lng_lat';
 import LngLatBounds from './lng_lat_bounds';
-import MercatorCoordinate, {mercatorXfromLng, mercatorYfromLat, mercatorZfromAltitude} from './mercator_coordinate';
+import MercatorCoordinate, {mercatorXfromLng, mercatorYfromLat, mercatorZfromAltitude, getCrs} from './mercator_coordinate';
 import Point from '@mapbox/point-geometry';
 import {wrap, clamp} from '../util/util';
 import {number as interpolate} from '../style-spec/util/interpolate';
@@ -58,7 +58,7 @@ class Transform {
 
     constructor(minZoom: ?number, maxZoom: ?number, minPitch: ?number, maxPitch: ?number, renderWorldCopies: boolean | void) {
         this.tileSize = 512; // constant
-        this.maxValidLatitude = 85.051129; // constant
+        this.maxValidLatitude = getCrs() === 'EPSG:4326' ? 90 : 85.051129;
 
         this._renderWorldCopies = renderWorldCopies === undefined ? true : renderWorldCopies;
         this._minZoom = minZoom || 0;
@@ -230,6 +230,10 @@ class Transform {
         return this._edgeInsets.getCenter(this.width, this.height);
     }
 
+    resetMaxValidLatitude () {
+        this.maxValidLatitude = getCrs() === 'EPSG:4326' ? 90 : 85.051129;
+    }
+
     /**
      * Returns if the padding params match
      *
@@ -330,7 +334,14 @@ class Transform {
 
         const centerCoord = MercatorCoordinate.fromLngLat(this.center);
         const numTiles = Math.pow(2, z);
-        const centerPoint = [numTiles * centerCoord.x, numTiles * centerCoord.y, 0];
+
+        let numTilesY = numTiles;
+            
+        if (getCrs() === 'EPSG:4326') {
+            numTilesY = numTilesY / 2;
+        }
+
+        const centerPoint = [numTiles * centerCoord.x, numTilesY * centerCoord.y, 0];
         const cameraFrustum = Frustum.fromInvProjectionMatrix(this.invProjMatrix, this.worldSize, z);
 
         // No change of LOD behavior for pitch lower than 60 and when there is no top padding: return only tile ids from the requested zoom level
@@ -345,7 +356,7 @@ class Transform {
         const newRootTile = (wrap: number): any => {
             return {
                 // All tiles are on zero elevation plane => z difference is zero
-                aabb: new Aabb([wrap * numTiles, 0, 0], [(wrap + 1) * numTiles, numTiles, 0]),
+                aabb: new Aabb([wrap * numTiles, 0, 0], [(wrap + 1) * numTiles, numTilesY, 0]),
                 zoom: 0,
                 x: 0,
                 y: 0,
@@ -406,11 +417,20 @@ class Transform {
                 continue;
             }
 
-            for (let i = 0; i < 4; i++) {
-                const childX = (x << 1) + (i % 2);
-                const childY = (y << 1) + (i >> 1);
+            if (it.zoom <= 0 && getCrs() === 'EPSG:4326') {
+                for (let i = 0; i < 2; i++) {
+                    const childX = (x << 1) + (i % 2);
+                    const childY = y;
+    
+                    stack.push({aabb: it.aabb.quadrant(i), zoom: it.zoom + 1, x: childX, y: childY, wrap: it.wrap, fullyVisible});
+                }
+            } else {
+                for (let i = 0; i < 4; i++) {
+                    const childX = (x << 1) + (i % 2);
+                    const childY = (y << 1) + (i >> 1);
 
-                stack.push({aabb: it.aabb.quadrant(i), zoom: it.zoom + 1, x: childX, y: childY, wrap: it.wrap, fullyVisible});
+                    stack.push({aabb: it.aabb.quadrant(i), zoom: it.zoom + 1, x: childX, y: childY, wrap: it.wrap, fullyVisible});
+                }
             }
         }
 
@@ -421,6 +441,10 @@ class Transform {
         this.width = width;
         this.height = height;
 
+        if (getCrs() === 'EPSG:4326') {
+            this.maxValidLatitude = 90;
+        }
+
         this.pixelsToGLUnits = [2 / width, -2 / height];
         this._constrain();
         this._calcMatrices();
@@ -428,18 +452,35 @@ class Transform {
 
     get unmodified(): boolean { return this._unmodified; }
 
-    zoomScale(zoom: number) { return Math.pow(2, zoom); }
-    scaleZoom(scale: number) { return Math.log(scale) / Math.LN2; }
+    zoomScale(zoom: number) {
+        return Math.pow(2, zoom); 
+    }
+
+    scaleZoom(scale: number) { 
+        return Math.log(scale) / Math.LN2; 
+    }
 
     project(lnglat: LngLat) {
         const lat = clamp(lnglat.lat, -this.maxValidLatitude, this.maxValidLatitude);
+        let y = mercatorYfromLat(lat) * this.worldSize;
+
+        if (getCrs() === 'EPSG:4326') {
+            y = mercatorYfromLat(lat) * ( this.worldSize / 2 );
+        }
+
         return new Point(
                 mercatorXfromLng(lnglat.lng) * this.worldSize,
-                mercatorYfromLat(lat) * this.worldSize);
+                y);
     }
 
     unproject(point: Point): LngLat {
-        return new MercatorCoordinate(point.x / this.worldSize, point.y / this.worldSize).toLngLat();
+        let y = point.y / this.worldSize;
+
+        if (getCrs() === 'EPSG:4326') {
+            y = point.y / (this.worldSize / 2);
+        }
+
+        return new MercatorCoordinate(point.x / this.worldSize, y).toLngLat();
     }
 
     get point(): Point { return this.project(this.center); }
@@ -521,9 +562,15 @@ class Transform {
 
         const t = z0 === z1 ? 0 : (targetZ - z0) / (z1 - z0);
 
+        let y = interpolate(y0, y1, t) / this.worldSize;
+
+        if (getCrs() === 'EPSG:4326') {
+            y = interpolate(y0, y1, t) / (this.worldSize / 2);
+        }
+
         return new MercatorCoordinate(
             interpolate(x0, x1, t) / this.worldSize,
-            interpolate(y0, y1, t) / this.worldSize);
+            y);
     }
 
     /**
@@ -533,7 +580,13 @@ class Transform {
      * @private
      */
     coordinatePoint(coord: MercatorCoordinate) {
-        const p = [coord.x * this.worldSize, coord.y * this.worldSize, 0, 1];
+        let y = coord.y * this.worldSize;
+
+        if (getCrs() === 'EPSG:4326') {
+            y = coord.y * (this.worldSize / 2);
+        }
+
+        const p = [coord.x * this.worldSize, y, 0, 1];
         vec4.transformMat4(p, p, this.pixelMatrix);
         return new Point(p[0] / p[3], p[1] / p[3]);
     }
@@ -621,8 +674,14 @@ class Transform {
 
         if (this.latRange) {
             const latRange = this.latRange;
-            minY = mercatorYfromLat(latRange[1]) * this.worldSize;
-            maxY = mercatorYfromLat(latRange[0]) * this.worldSize;
+            let worldSize = this.worldSize;
+
+            if (getCrs() === 'EPSG:4326') {
+                worldSize = worldSize / 2;
+            }
+
+            minY = mercatorYfromLat(latRange[1]) * worldSize;
+            maxY = mercatorYfromLat(latRange[0]) * worldSize;
             sy = maxY - minY < size.y ? size.y / (maxY - minY) : 0;
         }
 
@@ -677,7 +736,6 @@ class Transform {
 
     _calcMatrices() {
         if (!this.height) return;
-
         const halfFov = this._fov / 2;
         const offset = this.centerOffset;
         this.cameraToCenterDistance = 0.5 / Math.tan(halfFov) * this.height;
@@ -722,10 +780,15 @@ class Transform {
 
         // The mercatorMatrix can be used to transform points from mercator coordinates
         // ([0, 0] nw, [1, 1] se) to GL coordinates.
-        this.mercatorMatrix = mat4.scale([], m, [this.worldSize, this.worldSize, this.worldSize]);
+        let worldSizeY = this.worldSize;
+        if (getCrs() === 'EPSG:4326') {
+            worldSizeY = worldSizeY / 2;
+        } 
+
+        this.mercatorMatrix = mat4.scale([], m, [this.worldSize, worldSizeY, this.worldSize]);
 
         // scale vertically to meters per pixel (inverse of ground resolution):
-        mat4.scale(m, m, [1, 1, mercatorZfromAltitude(1, this.center.lat) * this.worldSize, 1]);
+        mat4.scale(m, m, [1, 1, mercatorZfromAltitude(1, this.center.lat) * worldSizeY, 1]);
 
         this.projMatrix = m;
         this.invProjMatrix = mat4.invert([], this.projMatrix);
@@ -771,8 +834,13 @@ class Transform {
         // calcMatrices hasn't run yet
         if (!this.pixelMatrixInverse) return 1;
 
+        let worldSizeY = this.worldSize;
+        if (getCrs() === 'EPSG:4326') {
+            worldSizeY = worldSizeY / 2;
+        }
+
         const coord = this.pointCoordinate(new Point(0, 0));
-        const p = [coord.x * this.worldSize, coord.y * this.worldSize, 0, 1];
+        const p = [coord.x * this.worldSize, coord.y * worldSizeY, 0, 1];
         const topPoint = vec4.transformMat4(p, p, this.pixelMatrix);
         return topPoint[3] / this.cameraToCenterDistance;
     }

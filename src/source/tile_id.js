@@ -3,7 +3,7 @@
 import {getTileBBox} from '@mapbox/whoots-js';
 import EXTENT from '../data/extent';
 import Point from '@mapbox/point-geometry';
-import MercatorCoordinate from '../geo/mercator_coordinate';
+import MercatorCoordinate, { getCrs } from '../geo/mercator_coordinate';
 
 import assert from 'assert';
 import {register} from '../util/web_worker_transfer';
@@ -30,23 +30,28 @@ export class CanonicalTileID {
 
     // given a list of urls, choose a url template and return a tile URL
     url(urls: Array<string>, scheme: ?string) {
-        const bbox = getTileBBox(this.x, this.y, this.z);
+        const bbox = getTileBBox(this.x, this.y, this.z, getCrs());
         const quadkey = getQuadkey(this.z, this.x, this.y);
+
+        const tmsY = getCrs() === 'EPSG:4326'? (Math.pow(2, this.z)/2 - this.y - 1) : (Math.pow(2, this.z) - this.y - 1);
 
         return urls[(this.x + this.y) % urls.length]
             .replace('{prefix}', (this.x % 16).toString(16) + (this.y % 16).toString(16))
             .replace('{z}', String(this.z))
             .replace('{x}', String(this.x))
-            .replace('{y}', String(scheme === 'tms' ? (Math.pow(2, this.z) - this.y - 1) : this.y))
+            .replace('{y}', String(scheme === 'tms' ? tmsY : this.y))
             .replace('{quadkey}', quadkey)
             .replace('{bbox-epsg-3857}', bbox);
     }
 
     getTilePoint(coord: MercatorCoordinate) {
         const tilesAtZoom = Math.pow(2, this.z);
+
+        let tilesAtZoomY = getCrs() === 'EPSG:4326' ? tilesAtZoom / 2: tilesAtZoom;
+
         return new Point(
             (coord.x * tilesAtZoom - this.x) * EXTENT,
-            (coord.y * tilesAtZoom - this.y) * EXTENT);
+            (coord.y * tilesAtZoomY - this.y) * EXTENT);
     }
 
     toString() {

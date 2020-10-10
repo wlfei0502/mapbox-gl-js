@@ -118,6 +118,10 @@ export default class Popup extends Evented {
         if (this._map) this.remove();
 
         this._map = map;
+
+        this._map._popups = this._map._popups || []
+        this._map._popups.push(this);
+
         if (this.options.closeOnClick) {
             this._map.on('click', this._onClose);
         }
@@ -197,6 +201,15 @@ export default class Popup extends Evented {
             this._map.off('mousemove', this._onMouseMove);
             this._map.off('mouseup', this._onMouseUp);
             this._map.off('drag', this._onDrag);
+            
+            const index = this._map._popups.findIndex(popup => {
+                return popup === this;
+            });
+            
+            if (~index !== 0) {
+                this._map._popups.splice(index, 1);
+            }
+            
             delete this._map;
         }
 

@@ -9,6 +9,7 @@ import type EvaluationContext from '../evaluation_context';
 import type {GeoJSON, GeoJSONPolygon, GeoJSONMultiPolygon} from '@mapbox/geojson-types';
 import Point from '@mapbox/point-geometry';
 import type {CanonicalTileID} from '../../../source/tile_id';
+import {mercatorXfromLng, mercatorYfromLat, getCrs}  from '../../../geo/mercator_coordinate'
 
 type GeoJSONPolygons =| GeoJSONPolygon | GeoJSONMultiPolygon;
 
@@ -23,14 +24,6 @@ function updateBBox(bbox: BBox, coord: Point) {
     bbox[3] = Math.max(bbox[3], coord[1]);
 }
 
-function mercatorXfromLng(lng: number) {
-    return (180 + lng) / 360;
-}
-
-function mercatorYfromLat(lat: number) {
-    return (180 - (180 / Math.PI * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)))) / 360;
-}
-
 function boxWithinBox(bbox1: BBox, bbox2: BBox) {
     if (bbox1[0] <= bbox2[0]) return false;
     if (bbox1[2] >= bbox2[2]) return false;
@@ -42,8 +35,12 @@ function boxWithinBox(bbox1: BBox, bbox2: BBox) {
 function getTileCoordinates(p, canonical: CanonicalTileID) {
     const x = mercatorXfromLng(p[0]);
     const y = mercatorYfromLat(p[1]);
-    const tilesAtZoom = Math.pow(2, canonical.z);
-    return [Math.round(x * tilesAtZoom * EXTENT), Math.round(y * tilesAtZoom * EXTENT)];
+    let tilesAtZoomY = tilesAtZoom = Math.pow(2, canonical.z);
+
+    if (getCrs() === 'EPSG:4326') {
+        tilesAtZoomY = tilesAtZoom/2;
+    }
+    return [Math.round(x * tilesAtZoom * EXTENT), Math.round(y * tilesAtZoomY * EXTENT)];
 }
 
 function onBoundary(p, p1, p2) {
