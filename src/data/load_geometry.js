@@ -20,9 +20,9 @@ const MIN = -MAX - 1;
  * @param {VectorTileFeature} feature
  * @private
  */
-export default function loadGeometry(feature: VectorTileFeature): Array<Array<Point>> {
+export default function loadGeometry(feature: VectorTileFeature, options: Object): Array<Array<Point>> {
     const scale = EXTENT / feature.extent;
-    const geometry = feature.loadGeometry();
+    const geometry = feature.loadGeometry(options);
     for (let r = 0; r < geometry.length; r++) {
         const ring = geometry[r];
         for (let p = 0; p < ring.length; p++) {

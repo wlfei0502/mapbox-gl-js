@@ -2,11 +2,14 @@
 
 import {getArrayBuffer} from '../util/ajax';
 
-import vt from '@mapbox/vector-tile';
+//import vt from '@mapbox/vector-tile';
+import vt from '../data/custom/vector_tile_custom';
 import Protobuf from 'pbf';
 import WorkerTile from './worker_tile';
 import {extend} from '../util/util';
 import {RequestPerformance} from '../util/performance';
+
+//import TDTDecode from '../util/decoder/tdt_decode';
 
 import type {
     WorkerSource,
@@ -42,12 +45,39 @@ export type LoadVectorData = (params: WorkerTileParameters, callback: LoadVector
  * @private
  */
 function loadVectorTile(params: WorkerTileParameters, callback: LoadVectorDataCallback) {
-    const request = getArrayBuffer(params.request, (err: ?Error, data: ?ArrayBuffer, cacheControl: ?string, expires: ?string) => {
+    const request = getArrayBuffer(params.request, (err: ?Error, data: ?ArrayBuffer, cacheControl: ?string, expires: ?string, encrypt: ?string) => {
         if (err) {
             callback(err);
         } else if (data) {
+            //console.log(params.request.url);
+            //debugger;
+
+            //数组取反
+            let array = Array.prototype.slice.call(new Uint8Array(data));
+            //console.log(array);
+            //console.log(array.length);
+            //let position = config.tdtArr;
+            let position = [1,2,3,4,99];
+            //console.log('解密数组值：' + position);
+            let tmp;
+            if(array.length > 0){
+                for(let i=0; i<position.length; i++){
+                    let p = position[i];
+                    if(p > array.length || p < 0){
+                        continue
+                    }
+                    tmp = array[p];
+                    array[p] = ~tmp;
+                }
+            }
+            data = new Uint8Array(array).buffer;
+            // console.log(data);
+            
+            let vectorTile = new vt.VectorTile(new Protobuf(data));
+            vectorTile.encrypt = encrypt;
+
             callback(null, {
-                vectorTile: new vt.VectorTile(new Protobuf(data)),
+                vectorTile,
                 rawData: data,
                 cacheControl,
                 expires

@@ -8,7 +8,8 @@ import {ProgramConfigurationSet} from '../program_configuration';
 import {TriangleIndexArray} from '../index_array_type';
 import EXTENT from '../extent';
 import earcut from 'earcut';
-import mvt from '@mapbox/vector-tile';
+//import mvt from '@mapbox/vector-tile';
+import mvt from '../custom/vector_tile_custom';
 const vectorTileFeatureTypes = mvt.VectorTileFeature.types;
 import classifyRings from '../../util/classify_rings';
 import assert from 'assert';
@@ -73,6 +74,7 @@ class FillExtrusionBucket implements Bucket {
     features: Array<BucketFeature>;
 
     constructor(options: BucketParameters<FillExtrusionStyleLayer>) {
+        this.encrypt = options.encrypt;
         this.zoom = options.zoom;
         this.overscaling = options.overscaling;
         this.layers = options.layers;
@@ -97,7 +99,9 @@ class FillExtrusionBucket implements Bucket {
             const evaluationFeature = {type: feature.type,
                 id,
                 properties: feature.properties,
-                geometry: needGeometry ? loadGeometry(feature) : []};
+                geometry: needGeometry ? loadGeometry(feature, {
+                    encrypt: this.encrypt
+                }) : []};
 
             if (!this.layers[0]._featureFilter.filter(new EvaluationParameters(this.zoom), evaluationFeature, canonical)) continue;
 
@@ -105,7 +109,9 @@ class FillExtrusionBucket implements Bucket {
                 id,
                 sourceLayerIndex,
                 index,
-                geometry: needGeometry ? evaluationFeature.geometry : loadGeometry(feature),
+                geometry: needGeometry ? evaluationFeature.geometry : loadGeometry(feature, {
+                    encrypt: this.encrypt
+                }),
                 properties: feature.properties,
                 type: feature.type,
                 patterns: {}

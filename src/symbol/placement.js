@@ -1,5 +1,10 @@
 // @flow
 
+import center from '@turf/center'
+import {point, feature} from '@turf/helpers'
+import featureCollection from '@turf/collect'
+import distance from '@turf/distance'
+//import centroid from '@turf/turf'
 import CollisionIndex from './collision_index';
 import EXTENT from '../data/extent';
 import * as symbolSize from './symbol_size';
@@ -39,9 +44,11 @@ class OpacityState {
 class JointOpacityState {
     text: OpacityState;
     icon: OpacityState;
-    constructor(prevState: ?JointOpacityState, increment: number, placedText: boolean, placedIcon: boolean, skipFade: ?boolean) {
+    pixelAnchor: JSON;
+    constructor(prevState: ?JointOpacityState, increment: number, placedText: boolean, placedIcon: boolean, skipFade: ?boolean, pixelAnchor: JSON) {
         this.text = new OpacityState(prevState ? prevState.text : null, increment, placedText, skipFade);
         this.icon = new OpacityState(prevState ? prevState.icon : null, increment, placedIcon, skipFade);
+        this.pixelAnchor = pixelAnchor;
     }
     isHidden() {
         return this.text.isHidden() && this.icon.isHidden();
@@ -56,10 +63,12 @@ class JointPlacement {
     // and if a subsequent viewport change brings them into view, they'll be fully
     // visible right away.
     skipFade: boolean;
-    constructor(text: boolean, icon: boolean, skipFade: boolean) {
+    pixelAnchor: JSON;
+    constructor(text: boolean, icon: boolean, skipFade: boolean, pixelAnchor: JSON) {
         this.text = text;
         this.icon = icon;
         this.skipFade = skipFade;
+        this.pixelAnchor = pixelAnchor;
     }
 }
 
@@ -211,6 +220,9 @@ export class Placement {
     zoomAtLastRecencyCheck: number;
     collisionCircleArrays: {[any]: CollisionCircleArray};
 
+    //pixelAnchor: Array<JSON>;
+    placementsFilterPoi: array;
+
     constructor(transform: Transform, fadeDuration: number, crossSourceCollisions: boolean, prevPlacement?: Placement) {
         this.transform = transform.clone();
         this.collisionIndex = new CollisionIndex(this.transform);
@@ -230,6 +242,8 @@ export class Placement {
         }
 
         this.placedOrientations = {};
+        
+        this.placementsFilterPoi = [];
     }
 
     getBucketParts(results: Array<BucketPart>, styleLayer: StyleLayer, tile: Tile, sortAcrossTiles: boolean) {
@@ -691,7 +705,8 @@ export class Placement {
             assert(symbolInstance.crossTileID !== 0);
             assert(bucket.bucketInstanceId !== 0);
 
-            this.placements[symbolInstance.crossTileID] = new JointPlacement(placeText || alwaysShowText, placeIcon || alwaysShowIcon, offscreen || bucket.justReloaded);
+            this.placements[symbolInstance.crossTileID] = new JointPlacement(placeText || alwaysShowText, placeIcon || alwaysShowIcon, offscreen || bucket.justReloaded, placedGlyphBoxes);
+            //console.log(this.placements[symbolInstance.crossTileID]);
             seenCrossTileIDs[symbolInstance.crossTileID] = true;
         };
 
@@ -791,12 +806,12 @@ export class Placement {
             const jointPlacement = this.placements[crossTileID];
             const prevOpacity = prevOpacities[crossTileID];
             if (prevOpacity) {
-                this.opacities[crossTileID] = new JointOpacityState(prevOpacity, increment, jointPlacement.text, jointPlacement.icon);
+                this.opacities[crossTileID] = new JointOpacityState(prevOpacity, increment, jointPlacement.text, jointPlacement.icon, false, jointPlacement.pixelAnchor);
                 placementChanged = placementChanged ||
                     jointPlacement.text !== prevOpacity.text.placed ||
                     jointPlacement.icon !== prevOpacity.icon.placed;
             } else {
-                this.opacities[crossTileID] = new JointOpacityState(null, increment, jointPlacement.text, jointPlacement.icon, jointPlacement.skipFade);
+                this.opacities[crossTileID] = new JointOpacityState(null, increment, jointPlacement.text, jointPlacement.icon, jointPlacement.skipFade, jointPlacement.pixelAnchor);
                 placementChanged = placementChanged || jointPlacement.text || jointPlacement.icon;
             }
         }
@@ -805,7 +820,7 @@ export class Placement {
         for (const crossTileID in prevOpacities) {
             const prevOpacity = prevOpacities[crossTileID];
             if (!this.opacities[crossTileID]) {
-                const jointOpacity = new JointOpacityState(prevOpacity, increment, false, false);
+                const jointOpacity = new JointOpacityState(prevOpacity, increment, false, false, false);
                 if (!jointOpacity.isHidden()) {
                     this.opacities[crossTileID] = jointOpacity;
                     placementChanged = placementChanged || prevOpacity.text.placed || prevOpacity.icon.placed;
@@ -845,11 +860,61 @@ export class Placement {
         }
     }
 
+    //判断像素距离
+    pixelDistance(start: number, end: number){
+        return parseInt(Math.sqrt(Math.pow(Math.abs(start[0] - end[0]), 2) + Math.pow(Math.abs(start[1] - end[1]), 2)));
+    }
+
+    //判断新增点与当前瓦片内每一个道路标注的距离方法
+    filterLinePoi(opacityState: Object, crossTileID: Object, distance: number){
+        let flag = true;
+        let isHave = false;
+        //判断新增点是否存在
+        for(let i = 0; i < this.placementsFilterPoi.length; i++){
+            if(typeof opacityState.pixelAnchor != 'undefined' && typeof this.placementsFilterPoi[i].pixelAnchor != 'undefined'){
+                if(opacityState.pixelAnchor.box.length > 0 && this.placementsFilterPoi[i].pixelAnchor.box.length > 0){
+                    if(opacityState.pixelAnchor.box[0] == this.placementsFilterPoi[i].pixelAnchor.box[0] && 
+                        opacityState.pixelAnchor.box[1] == this.placementsFilterPoi[i].pixelAnchor.box[1] && 
+                        opacityState.pixelAnchor.box[2] == this.placementsFilterPoi[i].pixelAnchor.box[2] && 
+                        opacityState.pixelAnchor.box[3] == this.placementsFilterPoi[i].pixelAnchor.box[3]
+                        ){
+                        isHave = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        //进行距离判断
+        for(let i = 0; i < this.placementsFilterPoi.length; i++){
+            if(typeof opacityState.pixelAnchor != 'undefined' && typeof this.placementsFilterPoi[i].pixelAnchor != 'undefined'){
+                if(opacityState.pixelAnchor.box.length > 0 && this.placementsFilterPoi[i].pixelAnchor.box.length > 0){
+                    let distanceDifference = this.pixelDistance(this.placementsFilterPoi[i].pixelAnchor.box, opacityState.pixelAnchor.box);
+                    if(distanceDifference < distance){
+                        flag = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        //如果新增点不存在添加到数组中
+        if(typeof this.placements[crossTileID] != 'undefined'){
+            if(!isHave){
+                this.placementsFilterPoi.push(opacityState);
+            }
+        }
+
+        return flag;
+    }
+
     updateBucketOpacities(bucket: SymbolBucket, seenCrossTileIDs: { [string | number]: boolean }, collisionBoxArray: ?CollisionBoxArray) {
         if (bucket.hasTextData()) bucket.text.opacityVertexArray.clear();
         if (bucket.hasIconData()) bucket.icon.opacityVertexArray.clear();
         if (bucket.hasIconCollisionBoxData()) bucket.iconCollisionBox.collisionVertexArray.clear();
         if (bucket.hasTextCollisionBoxData()) bucket.textCollisionBox.collisionVertexArray.clear();
+        //清空当前瓦片所有道路标注
+        if (this.placementsFilterPoi.length > 0) this.placementsFilterPoi = [];
 
         const layout = bucket.layers[0].layout;
         const duplicateOpacityState = new JointOpacityState(null, 0, false, false, true);
@@ -906,6 +971,23 @@ export class Placement {
             const horizontalHidden = placedOrientation === WritingMode.vertical;
             const verticalHidden = placedOrientation === WritingMode.horizontal || placedOrientation === WritingMode.horizontalOnly;
 
+            //对每一个新增的道路标注进行距离判断
+            let poiFlag = true;
+            if(bucket.zoom == 7 || bucket.zoom == 8){
+                if(layout.get('symbol-placement') === 'line'){
+                    if(hasText && hasIcon){
+                        //进行距离判断
+                        poiFlag = this.filterLinePoi(opacityState, crossTileID, 70);
+                    }
+                }
+            }
+            //如果距离不满足条件就不标注
+            if(!poiFlag){
+                opacityState = defaultOpacityState;
+                this.opacities[crossTileID] = defaultOpacityState;
+                this.prevPlacement.opacities[crossTileID] = defaultOpacityState;
+            }
+            
             if (hasText) {
                 const packedOpacity = packOpacity(opacityState.text);
                 // Vertical text fades in/out on collision the same way as corresponding

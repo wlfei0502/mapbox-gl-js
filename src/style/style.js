@@ -682,6 +682,11 @@ class Style extends Evented {
         this._order.splice(index, 0, id);
         this._layerOrderChanged = true;
 
+
+        if (this.sourceCaches[layer.source]) {
+            layer.sourceType = this.sourceCaches[layer.source].getSource().type;
+        }
+
         this._layers[id] = layer;
 
         if (this._removedLayers[id] && layer.source && layer.type !== 'custom') {

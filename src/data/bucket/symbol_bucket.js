@@ -26,7 +26,8 @@ import mergeLines from '../../symbol/mergelines';
 import {allowsVerticalWritingMode, stringContainsRTLText} from '../../util/script_detection';
 import {WritingMode} from '../../symbol/shaping';
 import loadGeometry from '../load_geometry';
-import mvt from '@mapbox/vector-tile';
+//import mvt from '@mapbox/vector-tile';
+import mvt from '../custom/vector_tile_custom';
 const vectorTileFeatureTypes = mvt.VectorTileFeature.types;
 import {verticalizedCharacterMap} from '../../util/verticalize_punctuation';
 import Anchor from '../../symbol/anchor';
@@ -342,6 +343,7 @@ class SymbolBucket implements Bucket {
     hasRTLText: boolean;
 
     constructor(options: BucketParameters<SymbolStyleLayer>) {
+        this.encrypt = options.encrypt;
         this.collisionBoxArray = options.collisionBoxArray;
         this.zoom = options.zoom;
         this.overscaling = options.overscaling;
@@ -432,26 +434,111 @@ class SymbolBucket implements Bucket {
         const availableImages = options.availableImages;
         const globalProperties = new EvaluationParameters(this.zoom);
 
-        for (const {feature, id, index, sourceLayerIndex} of features) {
+        for (const {feature, id, index, sourceLayerIndex, sourceLayer} of features) {
 
             const needGeometry = layer._featureFilter.needGeometry;
             const evaluationFeature = {type: feature.type,
                 id,
                 properties: feature.properties,
-                geometry: needGeometry ? loadGeometry(feature) : []};
+                geometry: needGeometry ? loadGeometry(feature, {
+                    encrypt: this.encrypt
+                }) : []};
 
             if (!layer._featureFilter.filter(globalProperties, evaluationFeature, canonical)) {
                 continue;
             }
 
-            if (!needGeometry)  evaluationFeature.geometry = loadGeometry(feature);
+            if (!needGeometry)  evaluationFeature.geometry = loadGeometry(feature, {
+                encrypt: this.encrypt
+            });
 
             let text: Formatted | void;
             if (hasText) {
                 // Expression evaluation will automatically coerce to Formatted
                 // but plain string token evaluation skips that pathway so do the
                 // conversion here.
-                const resolvedTokens = layer.getValueAndResolveTokens('text-field', evaluationFeature, canonical, availableImages);
+                let resolvedTokens = layer.getValueAndResolveTokens('text-field', evaluationFeature, canonical, availableImages);
+                
+                let resolvedTokensTmp = '';
+                //console.log(layer.sourceLayer);
+                //if(layer.sourceLayer === 'poi'){
+                //if(layer.sourceLayer === 'poi_label'){
+                
+                //ԭͼ������
+                //if(layer.sourceLayer === 'poi' || layer.sourceLayer === 'xiangzhen' || layer.sourceLayer === 'shengji2_point_5level_w' ||  layer.sourceLayer === 'zhongguodiming'){
+                //����ͼ������
+                if(layer.sourceLayer === 'BI' || layer.sourceLayer === 'CA' || layer.sourceLayer === 'CJ' ||  layer.sourceLayer === 'AF'){
+                    //console.log(layer.layout._values['text-max-width']['value']['value']);
+                    //debugger;
+                    let poiName = resolvedTokens.split('|');
+                    let poiParticipleLength = poiName.length;
+                    let showPoiName = poiName[0];
+                    if(poiParticipleLength == 2){ //���poi����ֻ�������ִʣ��������ַ�������С��8
+                        let poi1 = poiName[0].length;
+                        let poi2 = poiName[1].length;
+                        if((poi1 + poi2) < 8){
+                            resolvedTokens = poiName[0] + poiName[1];
+                        }else{
+                            resolvedTokens = poiName[0] + '\n' + poiName[1];
+                        }
+                    }
+
+                    if(poiParticipleLength > 2){  //���poi�������������Ϸִ�
+                        //poi���Ƶ��ܳ��ȣ���������|��
+                        let poiNameLength = resolvedTokens.length - poiParticipleLength -1;
+                        let poiNewName = '';
+                        //���ַ�������С��8
+                        if(poiNameLength <= 7){
+                            for(let i=0; i < poiParticipleLength; i++){
+                                poiNewName += poiName[i];
+                            }
+                            resolvedTokens = poiNewName;
+                        }else{
+                            //let poiParticipleArr = [];
+                            let poiParticipleSegmentNum = 0;
+                            let resolvedTokensTmp = '';
+                            for(let i=0; i < poiParticipleLength; i++){
+                                poiParticipleSegmentNum += poiName[i].length;
+                                if(i == 0){
+                                    if(poiParticipleSegmentNum > 7){
+                                        resolvedTokensTmp += poiName[i] + '\n';
+                                        //poiParticipleArr.push(poiName[i]);
+                                        //break;
+                                    }
+                                    
+                                    if(poiParticipleSegmentNum <= 7){
+                                        resolvedTokensTmp += poiName[i];
+                                    }
+                                }
+                                
+                                if(i > 0){
+                                    let resolvedTokensTmpArr = resolvedTokensTmp.split('\n');
+                                    if(resolvedTokensTmp.indexOf('\n') != -1){
+                                        //if(resolvedTokensTmpArr.length == 2){
+                                            if(resolvedTokensTmpArr[resolvedTokensTmpArr.length-1].length > 7){
+                                                resolvedTokensTmp += '\n' + poiName[i];
+                                            }else{
+                                                if(resolvedTokensTmpArr[resolvedTokensTmpArr.length-1].length + poiName[i].length <= 7){
+                                                    resolvedTokensTmp += poiName[i];
+                                                }else{
+                                                    resolvedTokensTmp += '\n' + poiName[i];
+                                                }
+                                            }
+                                    }else{
+                                        if(resolvedTokensTmp.length + poiName[i].length <= 7){
+                                            resolvedTokensTmp += poiName[i];
+                                        }else{
+                                            resolvedTokensTmp += '\n' + poiName[i];
+                                        }
+                                    }
+                                }
+                            }
+                            resolvedTokens = resolvedTokensTmp;
+
+                        }
+                    }
+                }
+                
                 const formattedText = Formatted.factory(resolvedTokens);
                 if (containsRTLText(formattedText)) {
                     this.hasRTLText = true;
@@ -491,7 +578,9 @@ class SymbolBucket implements Bucket {
                 icon,
                 index,
                 sourceLayerIndex,
-                geometry: loadGeometry(feature),
+                geometry: loadGeometry(feature, {
+                    encrypt: this.encrypt
+                }),
                 properties: feature.properties,
                 type: vectorTileFeatureTypes[feature.type],
                 sortKey

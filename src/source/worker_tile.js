@@ -100,7 +100,7 @@ class WorkerTile {
             for (let index = 0; index < sourceLayer.length; index++) {
                 const feature = sourceLayer.feature(index);
                 const id = featureIndex.getId(feature, sourceLayerId);
-                features.push({feature, id, index, sourceLayerIndex});
+                features.push({feature, id, index, sourceLayerIndex, sourceLayer});
             }
 
             for (const family of layerFamilies[sourceLayerId]) {
@@ -121,7 +121,8 @@ class WorkerTile {
                     overscaling: this.overscaling,
                     collisionBoxArray: this.collisionBoxArray,
                     sourceLayerIndex,
-                    sourceID: this.source
+                    sourceID: this.source,
+                    encrypt: data.encrypt
                 });
 
                 bucket.populate(features, options, this.tileID.canonical);

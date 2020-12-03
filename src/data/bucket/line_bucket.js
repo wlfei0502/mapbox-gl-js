@@ -8,7 +8,8 @@ import SegmentVector from '../segment';
 import {ProgramConfigurationSet} from '../program_configuration';
 import {TriangleIndexArray} from '../index_array_type';
 import EXTENT from '../extent';
-import mvt from '@mapbox/vector-tile';
+//import mvt from '@mapbox/vector-tile';
+import mvt from '../custom/vector_tile_custom';
 const vectorTileFeatureTypes = mvt.VectorTileFeature.types;
 import {register} from '../../util/web_worker_transfer';
 import {hasPattern, addPatternDependencies} from './pattern_bucket_features';
@@ -119,6 +120,7 @@ class LineBucket implements Bucket {
     uploaded: boolean;
 
     constructor(options: BucketParameters<LineStyleLayer>) {
+        this.encrypt = options.encrypt;
         this.zoom = options.zoom;
         this.overscaling = options.overscaling;
         this.layers = options.layers;
@@ -152,11 +154,15 @@ class LineBucket implements Bucket {
             const evaluationFeature = {type: feature.type,
                 id,
                 properties: feature.properties,
-                geometry: needGeometry ? loadGeometry(feature) : []};
+                geometry: needGeometry ? loadGeometry(feature, {
+                    encrypt: this.encrypt
+                }) : []};
 
             if (!this.layers[0]._featureFilter.filter(new EvaluationParameters(this.zoom), evaluationFeature, canonical)) continue;
 
-            if (!needGeometry)  evaluationFeature.geometry = loadGeometry(feature);
+            if (!needGeometry)  evaluationFeature.geometry = loadGeometry(feature, {
+                encrypt: this.encrypt
+            });
 
             const sortKey = lineSortKey ?
                 lineSortKey.evaluate(evaluationFeature, {}, canonical) :

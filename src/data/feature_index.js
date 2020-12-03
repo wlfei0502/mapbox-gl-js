@@ -7,7 +7,8 @@ import EXTENT from './extent';
 import featureFilter from '../style-spec/feature_filter';
 import Grid from 'grid-index';
 import DictionaryCoder from '../util/dictionary_coder';
-import vt from '@mapbox/vector-tile';
+//import vt from '@mapbox/vector-tile';
+import vt from './custom/vector_tile_custom';
 import Protobuf from 'pbf';
 import GeoJSONFeature from '../util/vectortile_to_geojson';
 import {arraysIntersect, mapObject} from '../util/util';
@@ -153,7 +154,10 @@ class FeatureIndex {
                 sourceFeatureState,
                 (feature: VectorTileFeature, styleLayer: StyleLayer, featureState: Object) => {
                     if (!featureGeometry) {
-                        featureGeometry = loadGeometry(feature);
+                        const layerSourceType = styleLayer.sourceType;
+                        featureGeometry = loadGeometry(feature, {
+                            sourceType:layerSourceType
+                        });
                     }
 
                     return styleLayer.queryIntersectsFeature(queryGeometry, feature, featureState, featureGeometry, this.z, args.transform, pixelsToTileUnits, args.pixelPosMatrix);

@@ -62,6 +62,7 @@ class CircleBucket<Layer: CircleStyleLayer | HeatmapStyleLayer> implements Bucke
     uploaded: boolean;
 
     constructor(options: BucketParameters<Layer>) {
+        this.encrypt = options.encrypt;
         this.zoom = options.zoom;
         this.overscaling = options.overscaling;
         this.layers = options.layers;
@@ -91,11 +92,16 @@ class CircleBucket<Layer: CircleStyleLayer | HeatmapStyleLayer> implements Bucke
             const evaluationFeature = {type: feature.type,
                 id,
                 properties: feature.properties,
-                geometry: needGeometry ? loadGeometry(feature) : []};
+                geometry: needGeometry ? loadGeometry(feature, {
+                    encrypt: this.encrypt
+                }) : []};
 
             if (!this.layers[0]._featureFilter.filter(new EvaluationParameters(this.zoom), evaluationFeature, canonical)) continue;
 
-            if (!needGeometry)  evaluationFeature.geometry = loadGeometry(feature);
+            if (!needGeometry)  evaluationFeature.geometry = loadGeometry(feature, {
+                encrypt: this.encrypt
+            });
+
             const sortKey = circleSortKey ?
                 circleSortKey.evaluate(evaluationFeature, {}, canonical) :
                 undefined;
