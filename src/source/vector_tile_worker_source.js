@@ -50,27 +50,27 @@ function loadVectorTile(params: WorkerTileParameters, callback: LoadVectorDataCa
             callback(err);
         } else if (data) {
             //console.log(params.request.url);
-            //debugger;
-
-            //数组取反
-            let array = Array.prototype.slice.call(new Uint8Array(data));
-            //console.log(array);
-            //console.log(array.length);
-            //let position = config.tdtArr;
-            let position = [1,2,3,4,99];
-            //console.log('解密数组值：' + position);
-            let tmp;
-            if(array.length > 0){
-                for(let i=0; i<position.length; i++){
-                    let p = position[i];
-                    if(p > array.length || p < 0){
-                        continue
+            if(encrypt === '1'){
+                //数组取反
+                let array = Array.prototype.slice.call(new Uint8Array(data));
+                //console.log(array);
+                //console.log(array.length);
+                //let position = config.tdtArr;
+                let position = [1,2,3,4,99];
+                //console.log('解密数组值：' + position);
+                let tmp;
+                if(array.length > 0){
+                    for(let i=0; i<position.length; i++){
+                        let p = position[i];
+                        if(p >= array.length || p < 0){
+                            continue
+                        }
+                        tmp = array[p];
+                        array[p] = ~tmp;
                     }
-                    tmp = array[p];
-                    array[p] = ~tmp;
                 }
+                data = new Uint8Array(array).buffer;
             }
-            data = new Uint8Array(array).buffer;
             // console.log(data);
             
             let vectorTile = new vt.VectorTile(new Protobuf(data));

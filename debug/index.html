@@ -16,7 +16,7 @@
 
 <script src='../dist/mapbox-gl-dev.js'></script>
 <script src='../debug/access_token_generated.js'></script>
-<script src='http://map2020.tianditu.cn/lib/tdtStyle1.3.3-jiami.js'></script>
+<script src='/debug/tdtStyle1.5.9-jiami.js'></script>
 <script>
 
 mapboxgl.accessToken = 'pk.eyJ1Ijoid2xmZWkiLCJhIjoiY2puMTB6MXZlNHZjcTNwbnl3dnowYjhoaSJ9.s6ZkjRHGIY6xVNBRAf52MQ';
@@ -28,6 +28,22 @@ var map = window.map = new mapboxgl.Map({
     style: styleTdt
 });
 
+
+map.on('load', () => {
+    map.addSource('region', {
+        'type':'vector',
+        'tiles':[
+            'http://192.9.104.187:8084/vt1/{z}/{x}/{y}'
+        ]
+    });
+
+    map.addLayer({
+        id:'region-layer',
+        type:'fill',
+        source:'region',
+        'source-layer':'aproa',
+    });
+});
 // setTimeout(function(){
 //     map.switchProjection('EPSG:4326', (style) => {
 //         map.removeLayer('base-simple-tiles');

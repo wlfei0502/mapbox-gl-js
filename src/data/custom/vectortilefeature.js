@@ -47,9 +47,8 @@ VectorTileFeature.prototype.loadGeometry = function(options) {
 
     // 数据类型
     var sourceType = options.sourceType;
-    // 适量瓦片是否加密的
-    var encrypt = options.encrypt;
-    console.log(encrypt);
+    // 适量瓦片是否加密的, true: 加密，false:不加密
+    var encrypt = options.encrypt === '1';
     var end = pbf.readVarint() + pbf.pos,
         cmd = 1,
         length = 0,
@@ -57,6 +56,7 @@ VectorTileFeature.prototype.loadGeometry = function(options) {
         y = 0,
         lines = [],
         line;
+
     while (pbf.pos < end) {
         if (length <= 0) {
             var cmdLen = pbf.readVarint();
@@ -66,30 +66,26 @@ VectorTileFeature.prototype.loadGeometry = function(options) {
 
         length--;
 
-        var cmdBoolen = sourceType === 'geojson' ? (cmd === 1 || cmd === 2) : (cmd === 2 || cmd === 3);
+        var cmdBoolen = (sourceType === 'geojson' || !encrypt) ? (cmd === 1 || cmd === 2) : (cmd === 2 || cmd === 3);
 
         if (cmdBoolen) {
             x += pbf.readSVarint();
             y += pbf.readSVarint();
 
-            var cmdMoveTo = sourceType === 'geojson' ? cmd === 1 : cmd === 2;
+            var cmdMoveTo = (sourceType === 'geojson' || !encrypt) ? cmd === 1 : cmd === 2;
 
             if (cmdMoveTo) { // moveTo
                 if (line) lines.push(line);
                 line = [];
             }
 
-            var point = sourceType === 'geojson' ? new Point(x, y) : new Point(x-13, y-33);
-
-            line.push(point);
-
+            line.push(new Point(x, y));
         } else if (cmd === 7) {
 
             // Workaround for https://github.com/mapbox/mapnik-vector-tile/issues/90
             if (line) {
                 line.push(line[0].clone()); // closePolygon
             }
-
         } else {
             throw new Error('unknown command ' + cmd);
         }
