@@ -164,7 +164,7 @@ class Program<Us: UniformBindings> {
         for (const segment of segments.get()) {
             const vaos = segment.vaos || (segment.vaos = {});
             const vao: VertexArrayObject = vaos[layerID] || (vaos[layerID] = new VertexArrayObject());
-
+            
             vao.bind(
                 context,
                 this,

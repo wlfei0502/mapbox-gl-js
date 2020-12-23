@@ -444,7 +444,7 @@ class Transform {
         if (getCrs() === 'EPSG:4326') {
             this.maxValidLatitude = 90;
         }
-
+        this.setMaxBounds();
         this.pixelsToGLUnits = [2 / width, -2 / height];
         this._constrain();
         this._calcMatrices();

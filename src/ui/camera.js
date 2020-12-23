@@ -144,6 +144,10 @@ class Camera extends Evented {
         //addAssertions(this);
     }
 
+    updateTransform (transform: Transform) {
+        this.transform = transform;
+    }
+
     /**
      * Returns the map's geographical centerpoint.
      *

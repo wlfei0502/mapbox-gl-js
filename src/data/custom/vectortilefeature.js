@@ -39,7 +39,6 @@ function readTag(pbf, feature) {
 VectorTileFeature.types = ['Unknown', 'Point', 'LineString', 'Polygon'];
 
 VectorTileFeature.prototype.loadGeometry = function(options) {
-    
     var pbf = this._pbf;
     pbf.pos = this._geometry;
 
@@ -56,6 +55,11 @@ VectorTileFeature.prototype.loadGeometry = function(options) {
         y = 0,
         lines = [],
         line;
+
+    if (encrypt) {
+        x = 0;
+        y = 0;
+    }
 
     while (pbf.pos < end) {
         if (length <= 0) {

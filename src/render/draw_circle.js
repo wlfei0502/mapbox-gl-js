@@ -104,7 +104,6 @@ function drawCircles(painter: Painter, sourceCache: SourceCache, layer: CircleSt
     for (const segmentsState of segmentsRenderStates) {
         const {programConfiguration, program, layoutVertexBuffer, indexBuffer, uniformValues} = segmentsState.state;
         const segments = segmentsState.segments;
-
         program.draw(context, gl.TRIANGLES, depthMode, stencilMode, colorMode, CullFaceMode.disabled,
             uniformValues, layer.id,
             layoutVertexBuffer, indexBuffer, segments,

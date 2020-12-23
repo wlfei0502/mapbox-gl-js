@@ -36,7 +36,7 @@ class Frustum {
                 }
                 return vec4.scale([], v, 1.0 / v[3] / worldSize * scale);
             });
-
+        
         const frustumPlanePointIndices = [
             [0, 1, 2],  // near
             [6, 5, 4],  // far

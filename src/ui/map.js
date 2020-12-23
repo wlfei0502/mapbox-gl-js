@@ -58,7 +58,7 @@ import type {
     SourceSpecification
 } from '../style-spec/types';
 
-import { setCrs } from '../geo/mercator_coordinate';
+import { setCrs, getCrs } from '../geo/mercator_coordinate';
 
 type ControlPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 /* eslint-disable no-use-before-define */
@@ -580,7 +580,7 @@ class Map extends Camera {
         this._resizeCanvas(width, height);
         this.transform.resize(width, height);
         this.painter.resize(width, height);
-
+        
         const fireMoving = !this._moving;
         if (fireMoving) {
             this.stop();
@@ -2603,7 +2603,7 @@ class Map extends Camera {
 
     switchProjection (crs, callback) {
         setCrs(crs);
-
+        
         if (mapboxgl.workers) {
             mapboxgl.workers.forEach((worker) => {
                 worker.postMessage({
@@ -2625,6 +2625,10 @@ class Map extends Camera {
         })
 
         callback();
+    }
+
+    getCrs () {
+        return getCrs();
     }
 
     _onWindowOnline() {

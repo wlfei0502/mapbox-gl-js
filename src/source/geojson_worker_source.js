@@ -77,7 +77,6 @@ function loadGeoJSONTile(params: WorkerTileParameters, callback: LoadVectorDataC
         // Compatibility with node Buffer (https://github.com/mapbox/pbf/issues/35)
         pbf = new Uint8Array(pbf);
     }
-
     callback(null, {
         vectorTile: geojsonWrapper,
         rawData: pbf.buffer
