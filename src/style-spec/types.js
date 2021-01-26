@@ -419,6 +419,35 @@ export type BackgroundLayerSpecification = {|
     |}
 |}
 
+export type PieLayerSpecification = {|
+    "id": string,
+    "type": "pie",
+    "metadata"?: mixed,
+    "source": string,
+    "source-layer"?: string,
+    "minzoom"?: number,
+    "maxzoom"?: number,
+    "layout"?: {
+        "visibility"?: "visible" | "none"
+    |},
+    "paint"?: {|
+        "pie-radius"?: number,
+        "pie-part_1"?: number,
+        "pie-part_2"?: number,
+        "pie-part_3"?: number,
+        "pie-part_4"?: number,
+        "pie-part_5"?: number,
+        "pie-part_6"?: number,
+        "pie-part_7"?: number,
+        "pie-part_8"?: number,
+        "pie-part_9"?: number,
+        "pie-translate"?: PropertyValueSpecification<[number, number]>,
+        "pie-translate-anchor"?: PropertyValueSpecification<"map" | "viewport">,
+        "pie-pitch-scale"?: PropertyValueSpecification<"map" | "viewport">,
+        "pie-pitch-alignment"?: PropertyValueSpecification<"map" | "viewport">,
+    |}
+|}
+
 export type LayerSpecification =
     | FillLayerSpecification
     | LineLayerSpecification
@@ -428,5 +457,6 @@ export type LayerSpecification =
     | FillExtrusionLayerSpecification
     | RasterLayerSpecification
     | HillshadeLayerSpecification
-    | BackgroundLayerSpecification;
+    | BackgroundLayerSpecification
+    | PieLayerSpecification;
 

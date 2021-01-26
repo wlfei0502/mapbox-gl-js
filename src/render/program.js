@@ -175,7 +175,7 @@ class Program<Us: UniformBindings> {
                 dynamicLayoutBuffer,
                 dynamicLayoutBuffer2
             );
-
+            
             gl.drawElements(
                 drawMode,
                 segment.primitiveLength * primitiveSize,

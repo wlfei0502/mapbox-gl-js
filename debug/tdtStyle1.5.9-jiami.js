@@ -24,7 +24,7 @@ var styleTdt = {
 		"minzoom": 1,
 		"maxzoom": 15,
 		"layout": {
-			"visibility": "visible"
+			"visibility": "none"
 		},
 		"paint": {
 			"background-color": "rgba(170, 198, 238, 1)"
@@ -35,7 +35,7 @@ var styleTdt = {
 		"minzoom": 11,
 		"maxzoom": 19,
 		"layout": {
-			"visibility": "visible"
+			"visibility": "none"
 		},
 		"paint": {
 			"background-color": "rgba(245, 244, 238, 1)"

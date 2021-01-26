@@ -4,7 +4,7 @@ var Point = require('@mapbox/point-geometry');
 
 module.exports = VectorTileFeature;
 
-function VectorTileFeature(pbf, end, extent, keys, values) {
+function VectorTileFeature(pbf, end, extent, keys, values, tileLayer) {
     // Public
     this.properties = {};
     this.extent = extent;
@@ -15,15 +15,24 @@ function VectorTileFeature(pbf, end, extent, keys, values) {
     this._geometry = -1;
     this._keys = keys;
     this._values = values;
+    this.encrypt = tileLayer.encrypt;
+    
 
     pbf.readFields(readFeature, this, end);
 }
 
 function readFeature(tag, feature, pbf) {
-    if (tag == 1) feature.id = pbf.readVarint();
-    else if (tag == 2) readTag(pbf, feature);
-    else if (tag == 3) feature.type = pbf.readVarint();
-    else if (tag == 4) feature._geometry = pbf.pos;
+    if (feature.encrypt === '-1') {
+        if (tag == 4) feature.id = pbf.readVarint();
+        else if (tag == 3) readTag(pbf, feature);
+        else if (tag == 2) feature.type = pbf.readVarint();
+        else if (tag == 1) feature._geometry = pbf.pos;
+    } else {
+        if (tag == 1) feature.id = pbf.readVarint();
+        else if (tag == 2) readTag(pbf, feature);
+        else if (tag == 3) feature.type = pbf.readVarint();
+        else if (tag == 4) feature._geometry = pbf.pos;
+    }
 }
 
 function readTag(pbf, feature) {
@@ -36,7 +45,13 @@ function readTag(pbf, feature) {
     }
 }
 
-VectorTileFeature.types = ['Unknown', 'Point', 'LineString', 'Polygon'];
+VectorTileFeature.types = function (encrypt) {
+    if (encrypt === '-1') {
+        return ['Unknown', 'LineString', 'Polygon', '', 'Point'];
+    }
+
+    return ['Unknown', 'Point', 'LineString', 'Polygon'];
+}
 
 VectorTileFeature.prototype.loadGeometry = function(options) {
     var pbf = this._pbf;
@@ -55,7 +70,7 @@ VectorTileFeature.prototype.loadGeometry = function(options) {
         y = 0,
         lines = [],
         line;
-
+    
     if (encrypt) {
         x = 0;
         y = 0;

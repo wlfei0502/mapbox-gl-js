@@ -36,6 +36,7 @@ import raster from './draw_raster';
 import background from './draw_background';
 import debug, {drawDebugPadding} from './draw_debug';
 import custom from './draw_custom';
+import pie from './draw_pie';
 
 const draw = {
     symbol,
@@ -48,7 +49,8 @@ const draw = {
     raster,
     background,
     debug,
-    custom
+    custom,
+    pie
 };
 
 import type Transform from '../geo/transform';

@@ -94,7 +94,7 @@ class FillExtrusionBucket implements Bucket {
         this.features = [];
         this.hasPattern = hasPattern('fill-extrusion', this.layers, options);
 
-        for (const {feature, id, index, sourceLayerIndex} of features) {
+        for (const {feature, id, index, sourceLayerIndex, sourceLayer} of features) {
             const needGeometry = this.layers[0]._featureFilter.needGeometry;
             const evaluationFeature = {type: feature.type,
                 id,
@@ -229,7 +229,7 @@ class FillExtrusionBucket implements Bucket {
 
             //Only triangulate and draw the area of the feature if it is a polygon
             //Other feature types (e.g. LineString) do not have area, so triangulation is pointless / undefined
-            if (vectorTileFeatureTypes[feature.type] !== 'Polygon')
+            if (vectorTileFeatureTypes(this.encrypt)[feature.type] !== 'Polygon')
                 continue;
 
             const flattened = [];

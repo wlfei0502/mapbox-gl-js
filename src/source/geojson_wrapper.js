@@ -25,7 +25,7 @@ class FeatureWrapper implements VectorTileFeature {
     _feature: Feature;
 
     extent: number;
-    type: 1 | 2 | 3;
+    type: 2 | 3 | 1;
     id: number;
     properties: {[_: string]: string | number | boolean};
 

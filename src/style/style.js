@@ -493,6 +493,7 @@ class Style extends Evented {
 
         const unimplementedOps = changes.filter(op => !(op.command in supportedDiffOperations));
         if (unimplementedOps.length > 0) {
+            debugger;
             throw new Error(`Unimplemented: ${unimplementedOps.map(op => op.command).join(', ')}.`);
         }
 

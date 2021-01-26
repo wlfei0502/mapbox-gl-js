@@ -72,6 +72,7 @@ class WorkerTile {
 
         const featureIndex = new FeatureIndex(this.tileID, this.promoteId);
         featureIndex.bucketLayerIDs = [];
+        featureIndex.encrypt = data.encrypt;
 
         const buckets: {[_: string]: Bucket} = {};
 
@@ -207,7 +208,8 @@ class WorkerTile {
                     // Only used for benchmarking:
                     glyphMap: this.returnDependencies ? glyphMap : null,
                     iconMap: this.returnDependencies ? iconMap : null,
-                    glyphPositions: this.returnDependencies ? glyphAtlas.positions : null
+                    glyphPositions: this.returnDependencies ? glyphAtlas.positions : null,
+                    encrypt: this.data.encrypt
                 });
             }
         }

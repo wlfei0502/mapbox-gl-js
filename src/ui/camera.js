@@ -583,7 +583,8 @@ class Camera extends Evented {
 
         return {
             center,
-            zoom,
+            // TODO: 保证整数级别，不然注记会显得模糊，矢量瓦片注记上线之后，该处需要移除
+            zoom:Math.floor(zoom),
             bearing
         };
     }

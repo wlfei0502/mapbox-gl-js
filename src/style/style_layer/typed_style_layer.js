@@ -7,6 +7,7 @@ import type HeatmapStyleLayer from './heatmap_style_layer';
 import type HillshadeStyleLayer from './hillshade_style_layer';
 import type LineStyleLayer from './line_style_layer';
 import type SymbolStyleLayer from './symbol_style_layer';
+import type PieStyleLayer from './pie_style_layer';
 
 export type TypedStyleLayer = CircleStyleLayer |
     FillStyleLayer |
@@ -14,4 +15,5 @@ export type TypedStyleLayer = CircleStyleLayer |
     HeatmapStyleLayer |
     HillshadeStyleLayer |
     LineStyleLayer |
-    SymbolStyleLayer;
+    SymbolStyleLayer | 
+    PieStyleLayer;

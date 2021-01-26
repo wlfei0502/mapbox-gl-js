@@ -73,9 +73,8 @@ function loadVectorTile(params: WorkerTileParameters, callback: LoadVectorDataCa
             }
             // console.log(data);
             
-            let vectorTile = new vt.VectorTile(new Protobuf(data));
+            let vectorTile = new vt.VectorTile(new Protobuf(data), null, encrypt);
             vectorTile.encrypt = encrypt;
-
             callback(null, {
                 vectorTile,
                 rawData: data,
@@ -165,7 +164,6 @@ class VectorTileWorkerSource implements WorkerSource {
             workerTile.vectorTile = response.vectorTile;
             workerTile.parse(response.vectorTile, this.layerIndex, this.availableImages, this.actor, (err, result) => {
                 if (err || !result) return callback(err);
-
                 // Transferring a copy of rawTileData because the worker needs to retain its copy.
                 callback(null, extend({rawTileData: rawTileData.slice(0)}, result, cacheControl, resourceTiming));
             });

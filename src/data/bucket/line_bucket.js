@@ -34,6 +34,7 @@ import type IndexBuffer from '../../gl/index_buffer';
 import type VertexBuffer from '../../gl/vertex_buffer';
 import type {FeatureStates} from '../../source/source_state';
 import type {ImagePosition} from '../../render/image_atlas';
+import ref_properties from '../../style-spec/util/ref_properties';
 
 // NOTE ON EXTRUDE SCALE:
 // scale the extrusion vector so that the normal length is this value.
@@ -148,10 +149,10 @@ class LineBucket implements Bucket {
         this.hasPattern = hasPattern('line', this.layers, options);
         const lineSortKey = this.layers[0].layout.get('line-sort-key');
         const bucketFeatures = [];
-
         for (const {feature, id, index, sourceLayerIndex} of features) {
             const needGeometry = this.layers[0]._featureFilter.needGeometry;
-            const evaluationFeature = {type: feature.type,
+            const evaluationFeature = {
+                type: feature.type,
                 id,
                 properties: feature.properties,
                 geometry: needGeometry ? loadGeometry(feature, {
@@ -282,8 +283,8 @@ class LineBucket implements Bucket {
             this.updateScaledDistance();
             this.maxLineLength = Math.max(this.maxLineLength, this.totalDistance);
         }
-
-        const isPolygon = vectorTileFeatureTypes[feature.type] === 'Polygon';
+        
+        const isPolygon = vectorTileFeatureTypes(this.encrypt)[feature.type] === 'Polygon';
 
         // If the line has duplicate vertices at the ends, adjust start/length to remove them.
         let len = vertices.length;

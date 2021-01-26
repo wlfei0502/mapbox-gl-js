@@ -4,7 +4,7 @@ var VectorTileFeature = require('./vectortilefeature.js');
 
 module.exports = VectorTileLayer;
 
-function VectorTileLayer(pbf, end) {
+function VectorTileLayer(pbf, end, options={}) {
     // Public
     this.version = 1;
     this.name = null;
@@ -17,34 +17,56 @@ function VectorTileLayer(pbf, end) {
     this._values = [];
     this._features = [];
 
+    // 加密标识
+    this.encrypt = options.encrypt;
+
     pbf.readFields(readLayer, this, end);
 
     this.length = this._features.length;
 }
 
 function readLayer(tag, layer, pbf) {
-    if (tag === 15) layer.version = pbf.readVarint();
-    else if (tag === 1) layer.name = pbf.readString();
-    else if (tag === 5) layer.extent = pbf.readVarint();
-    else if (tag === 2) layer._features.push(pbf.pos);
-    else if (tag === 3) layer._keys.push(pbf.readString());
-    else if (tag === 4) layer._values.push(readValueMessage(pbf));
+    if (layer.encrypt === '1') {
+        if (tag === 15) layer.version = pbf.readVarint();
+        else if (tag === 2) layer.name = pbf.readString();
+        else if (tag === 5) layer.extent = pbf.readVarint();
+        else if (tag === 1) layer._features.push(pbf.pos);
+        else if (tag === 4) layer._keys.push(pbf.readString());
+        else if (tag === 3) layer._values.push(readValueMessage(pbf, layer));
+    } else {
+        if (tag === 15) layer.version = pbf.readVarint();
+        else if (tag === 1) layer.name = pbf.readString();
+        else if (tag === 5) layer.extent = pbf.readVarint();
+        else if (tag === 2) layer._features.push(pbf.pos);
+        else if (tag === 3) layer._keys.push(pbf.readString());
+        else if (tag === 4) layer._values.push(readValueMessage(pbf, layer));
+    }
 }
 
-function readValueMessage(pbf) {
+function readValueMessage(pbf, layer) {
     var value = null,
         end = pbf.readVarint() + pbf.pos;
 
     while (pbf.pos < end) {
         var tag = pbf.readVarint() >> 3;
-
-        value = tag === 1 ? pbf.readString() :
+        
+        if (layer.encrypt === '1') {
+            value = tag === 1 ? pbf.readString() :
+            tag === 3 ? pbf.readFloat() :
+            tag === 2 ? pbf.readDouble() :
+            tag === 4 ? pbf.readVarint64() :
+            tag === 5 ? pbf.readVarint() :
+            tag === 6 ? pbf.readSVarint() :
+            tag === 7 ? pbf.readBoolean() : null;
+        } else {
+            value = tag === 1 ? pbf.readString() :
             tag === 2 ? pbf.readFloat() :
             tag === 3 ? pbf.readDouble() :
             tag === 4 ? pbf.readVarint64() :
             tag === 5 ? pbf.readVarint() :
             tag === 6 ? pbf.readSVarint() :
             tag === 7 ? pbf.readBoolean() : null;
+        }        
     }
 
     return value;
@@ -57,5 +79,5 @@ VectorTileLayer.prototype.feature = function(i) {
     this._pbf.pos = this._features[i];
 
     var end = this._pbf.readVarint() + this._pbf.pos;
-    return new VectorTileFeature(this._pbf, end, this.extent, this._keys, this._values);
+    return new VectorTileFeature(this._pbf, end, this.extent, this._keys, this._values, this);
 };

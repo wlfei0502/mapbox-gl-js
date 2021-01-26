@@ -16,140 +16,175 @@
 
 <script src='../dist/mapbox-gl-dev.js'></script>
 <script src='../debug/access_token_generated.js'></script>
-<script src='/debug/tdtStyle1.5.9-jiami.js'></script>
+<script src='/debug/tdtStyle-vec-1.6.3-jiami.js'></script>
 <script>
 
 mapboxgl.accessToken = 'pk.eyJ1Ijoid2xmZWkiLCJhIjoiY2puMTB6MXZlNHZjcTNwbnl3dnowYjhoaSJ9.s6ZkjRHGIY6xVNBRAf52MQ';
 
 var map = window.map = new mapboxgl.Map({
     container: 'map',
-    zoom: 1,
-    center: [112.9713, 32.37203],
-    style: styleTdt
+    zoom: 4,
+    center: [109.70, 19.11],
+    style: {
+        "version": 8,
+        "sprite": "http://192.9.104.187/static/sprite/png",
+        "glyphs": "http://192.9.104.187/static/font/{fontstack}/{range}.pbf",
+        "sources": {},
+        "layers": []
+    }
 });
 
 
-map.on('load', () => {
-    map.addSource('region', {
-        'type':'vector',
-        'tiles':[
-            'http://192.9.104.187:8084/vt1/{z}/{x}/{y}'
-        ]
-    });
+// map.on('load', () => {
+//     map.addSource('region', {
+//         'type':'geojson',
+//         data:'http://localhost:9966/debug/china.geojson'
+//     });
 
-    map.addLayer({
-        id:'region-layer',
-        type:'fill',
-        source:'region',
-        'source-layer':'aproa',
-    });
-});
+
+
+//     map.addLayer({
+//         id:'region-layer',
+//         type:'fill',
+//         source:'region'
+//     });
+// });
 // setTimeout(function(){
 //     map.switchProjection('EPSG:4326', (style) => {
-//         map.removeLayer('base-simple-tiles');
+//         map.removeLayer('simple-tiles');
+//         map.removeLayer('simple-tiles-name');
 //         map.removeSource('raster-tiles');
 
-//         map.addSource('raster-tiles',  {
+//         map.addSource('raster-tiles-c',  {
 //             'type': 'raster',
 //             'tiles': [
-//                 'https://t0.tianditu.gov.cn/DataServer?T=img_c&x={x}&y={y}&l={z}&tk=2db0ba5b3fa4414b2ea0ac2903d7519c'
+//                 'https://t0.tianditu.gov.cn/DataServer?T=vec_c&x={x}&y={y}&l={z}&tk=2db0ba5b3fa4414b2ea0ac2903d7519c'
+//             ],
+//             'tileSize': 256,
+//         });
+
+//         map.addSource('raster-tiles-name-c',  {
+//             'type': 'raster',
+//             'tiles': [
+//                 'https://t0.tianditu.gov.cn/DataServer?T=cva_c&x={x}&y={y}&l={z}&tk=2db0ba5b3fa4414b2ea0ac2903d7519c'
 //             ],
 //             'tileSize': 256,
 //         });
 
 //         map.addLayer({
-//             'id': 'base-simple-tiles',
+//             'id': 'simple-tiles',
 //             'type': 'raster',
-//             'source': 'raster-tiles',
+//             'source': 'raster-tiles-c',
 //             'minzoom': 0,
 //             'maxzoom': 22
-//         }, 'polygon');
-//     });
-// }, 10000);
+//         });
 
-//     map.on('load', () => {
-//         map.addSource('national-park', {
-//             'type': 'geojson',
-//             'data': {
-//             'type': 'FeatureCollection',
-//             'features': [
-//                 {
-//                     'type': 'Feature',
-//                     'geometry': {
-//                         'type': 'Polygon',
-//                         'coordinates': [
-//                             [
-//                                 [-121.353637, 40.584978],
-//                                 [-121.284551, 40.584758],
-//                                 [-121.275349, 40.541646],
-//                                 [-121.246768, 40.541017],
-//                                 [-121.251343, 40.423383],
-//                                 [-121.32687, 40.423768],
-//                                 [-121.360619, 40.43479],
-//                                 [-121.363694, 40.409124],
-//                                 [-121.439713, 40.409197],
-//                                 [-121.439711, 40.423791],
-//                                 [-121.572133, 40.423548],
-//                                 [-121.577415, 40.550766],
-//                                 [-121.539486, 40.558107],
-//                                 [-121.520284, 40.572459],
-//                                 [-121.487219, 40.550822],
-//                                 [-121.446951, 40.56319],
-//                                 [-121.370644, 40.563267],
-//                                 [-121.353637, 40.584978]
-//                             ]
-//                         ]
-//                     }
-//                 },
-//                 {
-//                     'type': 'Feature',
-//                     'geometry': {
-//                         'type': 'Point',
-//                         'coordinates': [-121.415061, 40.506229]
-//                     }
-//                 },
-//                 {
-//                     'type': 'Feature',
-//                     'geometry': {
-//                         'type': 'Point',
-//                         'coordinates': [-121.505184, 40.488084]
-//                     }
-//                 },
-//                 {
-//                     'type': 'Feature',
-//                     'geometry': {
-//                         'type': 'Point',
-//                         'coordinates': [-121.354465, 40.488737]
-//                     }
-//                 }
-//             ]
-//         }
+//         map.addLayer({
+//             'id': 'simple-tiles-name',
+//             'type': 'raster',
+//             'source': 'raster-tiles-name-c',
+//             'minzoom': 0,
+//             'maxzoom': 22
+//         });
 //     });
- 
-//     map.addLayer({
-//         'id': 'park-boundary',
-//         'type': 'fill',
-//         'source': 'national-park',
-//         'paint': {
-//             'fill-color': '#888888',
-//             'fill-opacity': 0.4
-//         },
-//         'filter': ['==', '$type', 'Polygon']
-//     });
- 
-//     map.addLayer({
-//         'id': 'park-volcanoes',
-//         'type': 'circle',
-//         'source': 'national-park',
-//         'paint': {
-//             'circle-radius': 6,
-//             'circle-color': '#B42222'
-//         },
-//         'filter': ['==', '$type', 'Point']
-//     });
+// }, 5000);
 
-//     map.on('mousemove', 'park-boundary', () => {});
-// });
+map.on('load', () => {
+
+        map.addSource('raster-tiles-c',  {
+            'type': 'raster',
+            'tiles': [
+                'https://t0.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=2db0ba5b3fa4414b2ea0ac2903d7519c'
+            ],
+            'tileSize': 256,
+        });
+
+        map.addLayer({
+            'id': 'simple-tiles',
+            'type': 'raster',
+            'source': 'raster-tiles-c',
+            'minzoom': 0,
+            'maxzoom': 22
+        });
+
+
+        map.addSource('vector-source', {
+            type: "vector",
+            tiles: ["http://192.9.104.187:8084/vt1/{z}/{x}/{y}"],
+            promoteId: "gb",
+        });
+
+        map.addLayer({
+            id: 'vector',
+            type: 'fill',
+            source: 'vector-source',
+            'source-layer': 'aproa',
+            paint: {
+                'fill-opacity':0.8,
+                'fill-outline-color': '#d3d3d3'
+            }
+        });
+
+    // map.addSource('national-park', {
+    //     'type': 'geojson',
+    //     'data': {
+    //         'type': 'Feature',
+    //         'properties':{ name:'面' },
+    //         'geometry': {
+    //             'type': 'Polygon',
+    //             'coordinates': [
+    //                 [
+    //                     [-67.13734351262877, 45.137451890638886],
+    //                     [-66.96466, 44.8097],
+    //                     [-68.03252, 44.3252],
+    //                     [-69.06, 43.98],
+    //                     [-70.11617, 43.68405],
+    //                     [-70.64573401557249, 43.090083319667144],
+    //                     [-70.75102474636725, 43.08003225358635],
+    //                     [-70.79761105007827, 43.21973948828747],
+    //                     [-70.98176001655037, 43.36789581966826],
+    //                     [-70.94416541205806, 43.46633942318431],
+    //                     [-71.08482, 45.3052400000002],
+    //                     [-70.6600225491012, 45.46022288673396],
+    //                     [-70.30495378282376, 45.914794623389355],
+    //                     [-70.00014034695016, 46.69317088478567],
+    //                     [-69.23708614772835, 47.44777598732787],
+    //                     [-68.90478084987546, 47.184794623394396],
+    //                     [-68.23430497910454, 47.35462921812177],
+    //                     [-67.79035274928509, 47.066248887716995],
+    //                     [-67.79141211614706, 45.702585354182816],
+    //                     [-67.13734351262877, 45.137451890638886]
+    //                 ]
+    //             ]
+    //         }
+    //     }
+    // });
+ 
+    // map.addLayer({
+    //     'id': 'maine',
+    //     'type': 'fill',
+    //     'source': 'national-park',
+    //     'layout': {},
+    //     'paint': {
+    //         'fill-color': '#088',
+    //         'fill-opacity': 0.8
+    //     }
+    // });
+
+    // map.on('mousemove', 'maine', function (e) {
+    //     var features = map.queryRenderedFeatures(e.point);
+    //     console.log(features);
+    // })
+    // map.addLayer({
+    //     'id': 'park-volcanoes',
+    //     'type': 'circle',
+    //     'source': 'national-park',
+    //     'paint': {
+    //         'circle-radius': [ 'get', 'child' ]
+    //         // 'pie-fields': [ 'child', 'man', 'old' ]
+    //     }
+    // });
+});
 </script>
 </body>
 </html>

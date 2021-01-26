@@ -582,7 +582,7 @@ class SymbolBucket implements Bucket {
                     encrypt: this.encrypt
                 }),
                 properties: feature.properties,
-                type: vectorTileFeatureTypes[feature.type],
+                type: vectorTileFeatureTypes(this.encrypt)[feature.type],
                 sortKey
             };
             this.features.push(symbolFeature);
