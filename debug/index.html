@@ -23,15 +23,9 @@ mapboxgl.accessToken = 'pk.eyJ1Ijoid2xmZWkiLCJhIjoiY2puMTB6MXZlNHZjcTNwbnl3dnowY
 
 var map = window.map = new mapboxgl.Map({
     container: 'map',
-    zoom: 4,
+    zoom: 12,
     center: [109.70, 19.11],
-    style: {
-        "version": 8,
-        "sprite": "http://192.9.104.187/static/sprite/png",
-        "glyphs": "http://192.9.104.187/static/font/{fontstack}/{range}.pbf",
-        "sources": {},
-        "layers": []
-    }
+    style: styleTdt
 });
 
 
@@ -91,39 +85,39 @@ var map = window.map = new mapboxgl.Map({
 
 map.on('load', () => {
 
-        map.addSource('raster-tiles-c',  {
-            'type': 'raster',
-            'tiles': [
-                'https://t0.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=2db0ba5b3fa4414b2ea0ac2903d7519c'
-            ],
-            'tileSize': 256,
-        });
+        // map.addSource('raster-tiles-c',  {
+        //     'type': 'raster',
+        //     'tiles': [
+        //         'https://t0.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=2db0ba5b3fa4414b2ea0ac2903d7519c'
+        //     ],
+        //     'tileSize': 256,
+        // });
 
-        map.addLayer({
-            'id': 'simple-tiles',
-            'type': 'raster',
-            'source': 'raster-tiles-c',
-            'minzoom': 0,
-            'maxzoom': 22
-        });
+        // map.addLayer({
+        //     'id': 'simple-tiles',
+        //     'type': 'raster',
+        //     'source': 'raster-tiles-c',
+        //     'minzoom': 0,
+        //     'maxzoom': 22
+        // });
 
 
-        map.addSource('vector-source', {
-            type: "vector",
-            tiles: ["http://192.9.104.187:8084/vt1/{z}/{x}/{y}"],
-            promoteId: "gb",
-        });
+        // map.addSource('vector-source', {
+        //     type: "vector",
+        //     tiles: ["http://192.9.104.187:8084/vt1/{z}/{x}/{y}"],
+        //     promoteId: "gb",
+        // });
 
-        map.addLayer({
-            id: 'vector',
-            type: 'fill',
-            source: 'vector-source',
-            'source-layer': 'aproa',
-            paint: {
-                'fill-opacity':0.8,
-                'fill-outline-color': '#d3d3d3'
-            }
-        });
+        // map.addLayer({
+        //     id: 'vector',
+        //     type: 'fill',
+        //     source: 'vector-source',
+        //     'source-layer': 'aproa',
+        //     paint: {
+        //         'fill-opacity':0.8,
+        //         'fill-outline-color': '#d3d3d3'
+        //     }
+        // });
 
     // map.addSource('national-park', {
     //     'type': 'geojson',

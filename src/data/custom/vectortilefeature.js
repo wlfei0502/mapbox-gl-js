@@ -22,7 +22,8 @@ function VectorTileFeature(pbf, end, extent, keys, values, tileLayer) {
 }
 
 function readFeature(tag, feature, pbf) {
-    if (feature.encrypt === '-1') {
+
+    if (feature.encrypt === '1') {
         if (tag == 4) feature.id = pbf.readVarint();
         else if (tag == 3) readTag(pbf, feature);
         else if (tag == 2) feature.type = pbf.readVarint();
@@ -46,7 +47,7 @@ function readTag(pbf, feature) {
 }
 
 VectorTileFeature.types = function (encrypt) {
-    if (encrypt === '-1') {
+    if (encrypt === '1') {
         return ['Unknown', 'LineString', 'Polygon', '', 'Point'];
     }
 
